@@ -38,6 +38,8 @@ history = model.fit([Anchor,Positive,Negative],y=labelTrain,
 print(" ")
 print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 print("STEP 4: Saving trained model and plotting model history...")
+if not os.path.exists(BASE_OUTPUT):
+    os.mkdir(BASE_OUTPUT)
 model.save(MODEL_PATH)
 
 plot_training(history, PLOT_PATH, acc_flag=False)

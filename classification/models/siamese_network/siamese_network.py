@@ -1,12 +1,10 @@
 # import the necessary packages
-from glob import glob
-from sklearn.datasets import load_files
 from tensorflow.keras import applications
-from tensorflow.keras.models import load_model, Model, Sequential
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Dropout, Flatten
+from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D
 from tensorflow.keras.layers import MaxPooling2D
 
@@ -16,15 +14,13 @@ from classification.config import *
 def build_siamese_model(inputShape, embeddingDim=48):
     """
     Set up of custom CNN feature extracting backbone
-    
-    inputShape must be tuple such that: (img_height,img_width, channels)
-    
     Network is setup in 2 sets of Convolutional, ReLU, MaxPooling and Dropout layers
-    
     Top layer performs Global Average Pooling followed by a Fully Connected Layer
-    
     Network outputs embeddings from image of size = embeddingDim, defaults to 48
-    
+    Arguments:
+        - inputShape: tuple, such that (img_height,img_width, channels)
+    Returns:
+        - model: keras::model
     """
     # specify the inputs for the feature extractor network
     inputs = Input(inputShape)
@@ -36,7 +32,7 @@ def build_siamese_model(inputShape, embeddingDim=48):
     x = Conv2D(64, (2, 2), padding="same", activation="relu")(x)
     x = MaxPooling2D(pool_size=2)(x)
     x = Dropout(0.3)(x)
-    
+
     # prepare the final outputs
     pooledOutput = GlobalAveragePooling2D()(x)
     outputs = Dense(embeddingDim)(pooledOutput)

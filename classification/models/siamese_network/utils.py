@@ -11,12 +11,12 @@ def make_pairs(images, labels):
     '''
     Create image negative and positive pairs to serve as input
     of siamese network model
-    
+
     -- images: array that contains image dataset
     -- labels: array of corresponding image labels
-    
+
     '''
-    
+
     # initialize two empty lists to hold the (image, image) pairs and
     # labels to indicate if a pair is positive or negative
     pairImages = []

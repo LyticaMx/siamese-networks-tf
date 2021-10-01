@@ -18,10 +18,9 @@ def initialize_siamese_network():
     Initilizes custom feature extracting CNN
     Compiles Siamese Network by joining two CNNs
     Sets training hyperparameters
- 
-    
+
     Returns:
-    model, tf-keras compiled model ready for fitting
+         - model, tf-keras compiled model ready for fitting
     """
     # configure the siamese network
     imgA = Input(shape=IMG_SHAPE)
@@ -60,7 +59,7 @@ def initialize_triple_siamese_network():
     imgPos = Input(shape=IMG_SHAPE, name='positive_input')
     imgNeg = Input(shape=IMG_SHAPE, name='negative_input')
 
-    # since sister networks, we buiild two instances of the SAME class
+    # since sister networks, we buiild three instances of the SAME class
     featsAnchor = featureExtractor(imgAnchor)
     featsPos = featureExtractor(imgPos)
     featsNeg = featureExtractor(imgNeg)

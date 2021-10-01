@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
 from classification.dataset.augmentation import augment_data
+from classification.config import IMG_SHAPE, EMBEDDING_DIM
 
 
 def make_pairs(images, labels):
@@ -61,7 +62,7 @@ def make_pairs(images, labels):
             pairLabels.append([0])
         except:
             continue
-        
+
     # return a 2-tuple of our image pairs and labels
     return (np.array(pairImages), np.array(pairLabels))
 
@@ -70,11 +71,11 @@ def make_triplets(images, labels):
     """
     Generates model input image triplets, these are used when 
     training a Triple Siamese Network Model
-    
+
     Arguments:
     images: set of input images
     labels: corresponding set of image labels
-    
+
     Returns:
     tuple of image triplets and corresponding image triplet label 
     image triplet labels indicate whether image pair is positive or negative
@@ -83,19 +84,19 @@ def make_triplets(images, labels):
     # labels to indicate if a pair is positive or negative
     tripletImages = []
     tripletLabels = []
-    
+
     # get unique or total classes and set index list for each one of classes
     numClasses = len(np.unique(labels))
     idx = [np.where(labels == i)[0] for i in range(0, numClasses)]
-    
-        # loop over all images
+
+    # loop over all images
     # index A refers to current looped image, and B index refers to paired positive image
     for idxA in range(len(images)):
         # grab the current image and label belonging to the current
         # iteration
         currentImage = images[idxA]
         label = labels[idxA]
-        
+
         try :
             # positive example pick
             # randomly pick an image that belongs to the *same* class label
@@ -112,10 +113,10 @@ def make_triplets(images, labels):
             tripletImages.append([currentImage, posImage, negImage])
             # append a 1 since first is always positive and 0 for negative image
             tripletLabels.append([1, 0])
-            
+
         except:
             continue
-        
+
     # return a 3-tuple of our image pairs and labels
     return (np.array(tripletImages), np.array(tripletLabels))
 
@@ -124,7 +125,7 @@ def import_dataset(dataset_path):
     """
     Imports and pre processes input image data
     Transforms every image to default image shape: (224, 224, 3) as VGG
-    
+
     Arguments:
     dataset_path: local path to input images, these path must contain images ordered in the following fashion:
     dataset
@@ -137,7 +138,7 @@ def import_dataset(dataset_path):
        |- class_2
        ...
        |- class_n
-    
+
     Returns:
     data_paths, array containing every single path of every input image
     images, array, set of input images
@@ -151,6 +152,8 @@ def import_dataset(dataset_path):
     data_df = []
     heights = []
     widths = []
+
+    resize_dim = IMG_SHAPE[:2]
 
     # dataset directory must have a folder per image class
     for product in os.listdir(dataset_path):
@@ -171,13 +174,13 @@ def import_dataset(dataset_path):
             heights.append(h)
             widths.append(w)
 
-            sample_img = cv2.resize(sample_img, (224, 224))
+            sample_img = cv2.resize(sample_img, resize_dim)
 
             data_paths.append(sample_path)
             images.append(sample_img)
             labels.append(product)
             data_df.append([product, sample_img])
-            
+
     return data_paths, images, labels, data_df
 
 
@@ -185,12 +188,12 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
     """
     Imports data, splits into training and validation sets, 
     generates input image pairs
-    
+
     Arguments:
     DATASET_PATH: path to input images
     SPLIT_PER: training split percentage from full dataset
     aug_flag: flag that indicates whether or not image augmentation should be performed
-    
+
     Returns:
     pairTrain, set of training image pairs
     labelTrain, corresponding set of image pair labels 
@@ -199,7 +202,7 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
     """
     data_paths, images, labels, data_df = import_dataset(DATASET_PATH)
     n_real = len(labels) 
-    
+
     # if augmentation is flagged, perform it
     if aug_flag:
         images, labels = augment_data(images, labels, 5)
@@ -207,7 +210,7 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
 
         print("######### Augmented data from {} to {} images ##############".format(n_real, n_aug))
         print(" ")
-    
+
     print("######### PROCESSING DATA ##############")
     # transform categorical classes to numerical values
     le = preprocessing.LabelEncoder()
@@ -225,12 +228,13 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
         shuffle=True,
         random_state=42,
     )
-    
+
     print(" ")
     print("Out of {} total samples, we've got {} training samples and {} test samples...".format(len(images), len(X_train), len(X_test)))
 
 
-# Now that we've got our data loaded and split we may now build our positive and negative image pairs
+    # Now that we've got our data loaded and split
+    # we may now build our positive and negative image pairs
     (pairTrain, labelTrain) = make_pairs(X_train, y_train)
     (pairTest, labelTest) = make_pairs(X_test, y_test)
     print("From which, {} training image pairs and {} test pairs were generated...".format(len(labelTrain), len(labelTest)))
@@ -240,7 +244,7 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
     images = []
 
     # loop over a sample of our training pairs
-    for i in np.random.choice(np.arange(0, len(pairTrain)), size=(49,)):
+    for i in np.random.choice(np.arange(0, len(pairTrain)), size=(EMBEDDING_DIM + 1,)):
 
         # grab the current image pair and label
         imageA = pairTrain[i][0]
@@ -271,11 +275,11 @@ def data_processing(DATASET_PATH, SPLIT_PER, aug_flag=False):
 
         # with out image stack done we build the montage for the images
         montage = build_montages(images, (96, 51), (7, 7))[0]
-        
+
     # show the output montage
     cv2.imshow("Image pair montage obtained from training set", montage)
     cv2.waitKey(0)
-    
+
     return pairTrain, labelTrain, pairTest, labelTest
 
 
@@ -284,28 +288,28 @@ def triplet_data_processing(DATASET_PATH, SPLIT_PER):
     Imports data, splits into training and validation sets, 
     generates input image triplets, use when training a 
     Triple Siamese Network
-    
+
     Arguments:
     DATASET_PATH: path to input images
     SPLIT_PER: training split percentage from full dataset
     aug_flag: flag that indicates whether or not image augmentation should be performed
-    
+
     Returns:
     tupleTrain, set of training image pairs
     labelTrain, corresponding set of image pair labels 
     tupleTest, set of validation image pairs
     labelTest, corresponding set of image pair labels
     """
-    
+
     data_paths, images, labels, data_df = import_dataset(DATASET_PATH)
     n_real = len(labels) 
-    
+
     #images, labels = augment_data(images, labels, 5)
     #n_aug = len(labels)
     print("######### Total images processed: {} ##############".format(n_real))
     #print("######### Augmented data from {} to {} images ##############".format(n_real, n_aug))
     print(" ")
-    
+
     print("######### PROCESSING DATA ##############")
     # transform categorical classes to numerical values
     le = preprocessing.LabelEncoder()
@@ -323,7 +327,7 @@ def triplet_data_processing(DATASET_PATH, SPLIT_PER):
         shuffle=True,
         random_state=42,
     )
-    
+
     print(" ")
     print("Out of {} total samples, we've got {} training samples and {} test samples...".format(len(images), 
                                                                                                  len(X_train), len(X_test)))
@@ -338,7 +342,7 @@ def triplet_data_processing(DATASET_PATH, SPLIT_PER):
     images = []
 
     # loop over a sample of our training pairs
-    for i in np.random.choice(np.arange(0, len(tupleTrain)), size=(49,)):
+    for i in np.random.choice(np.arange(0, len(tupleTrain)), size=(EMBEDDING_DIM + 1,)):
 
         # grab the current image pair and label
         imageA = tupleTrain[i][0]
@@ -363,9 +367,9 @@ def triplet_data_processing(DATASET_PATH, SPLIT_PER):
 
         # with out image stack done we build the montage for the images
         montage = build_montages(images, (96, 51), (7, 7))[0]
-        
+
     # show the output montage
     cv2.imwrite("montage.jpg", montage)
     # cv2.waitKey(0)
-    
+
     return tupleTrain, labelTrain, tupleTest, labelTest

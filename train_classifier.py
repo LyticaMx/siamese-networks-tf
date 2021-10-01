@@ -40,7 +40,7 @@ print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 print("STEP 4: Saving trained model and plotting model history...")
 if not os.path.exists(BASE_OUTPUT):
     os.mkdir(BASE_OUTPUT)
-model.save(MODEL_PATH)
+model.save(MODEL_PATH, save_format="h5")
 
 plot_training(history, PLOT_PATH, acc_flag=False)
 plot_error_diff(history, BASE_OUTPUT)
